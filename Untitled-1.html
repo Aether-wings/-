@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myna 無人機</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
+    <style>
+        /* ------------------------------------- */
+        /* 顏色與基礎設置 */
+        /* ------------------------------------- */
+        :root {
+            --accent-color: #61DAFB; /* 淡藍色/科技藍 */
+            --dark-bg: #000000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { background-color: #050506; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; overflow-x: hidden; }
+
+        /* ------------------------------------- */
+        /* 1. Hero 區塊 (第一屏) */
+        /* ------------------------------------- */
+        .hero { position: relative; height: 100vh; width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .hero > video { height: 100%; left: 0; object-fit: cover; position: absolute; top: 0; width: 100%; z-index: 1; }
+        .hero-content { position: relative; z-index: 10; text-align: center; padding: 20px 20px 100px; }
+        .hero-content h1 { font-size: clamp(3.5rem, 9vw, 7rem); font-weight: 900; letter-spacing: 5px; margin-bottom: 20px; position: relative; z-index: 11; }
+        
+        /* SVG 線條動畫 (淡藍色) */
+        .svg-container { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 8; }
+        .svg-line { width: 400px; height: 400px; }
+        .line { fill: none; stroke: var(--accent-color); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 200; stroke-dashoffset: 200; animation: draw-line 5s cubic-bezier(0.8, 0, 0.2, 1) infinite; }
+        @keyframes draw-line { 0% { stroke-dashoffset: 200; } 40% { stroke-dashoffset: 0; } 70% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 200; } }
+
+        /* 向下滾動指示器 (淡藍色，跳動) */
+        .scroll-indicator {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            z-index: 12; text-decoration: none; color: var(--accent-color); 
+            font-size: 2rem; opacity: 1; padding: 10px; line-height: 1;
+            text-shadow: none !important; font-family: sans-serif; font-weight: bold;
+        }
+        .indicator-arrow { display: inline-block; transform: rotate(-90deg); animation: bounce-scroll 2s infinite; }
+        @keyframes bounce-scroll { 0%, 20%, 50%, 80%, 100% { transform: rotate(-90deg) translateY(0); } 40% { transform: rotate(-90deg) translateY(-10px); } 60% { transform: rotate(-90deg) translateY(-5px); } }
+
+        /* ------------------------------------- */
+        /* 2. 任務自主區塊 (第二屏內容) */
+        /* ------------------------------------- */
+        .feature-section {
+            background-color: var(--dark-bg); padding: 120px 50px; position: relative; 
+            z-index: 2; min-height: 100vh; margin-top: 0; overflow: hidden; 
+        }
+        .feature-container { max-width: 1200px; margin: 0 auto; text-align: left; }
+        .feature-text { width: 100%; max-width: 800px; margin: 0 auto; padding: 0; }
+        .feature-text h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; margin-bottom: 40px; line-height: 1; }
+        .feature-text p { font-size: 1.15rem; margin-bottom: 30px; color: #ccc; }
+        
+        /* CTA 按鈕 (淡藍色邊框) */
+        .cta-button { 
+            padding: 15px 30px; font-size: 1rem; text-decoration: none; color: var(--accent-color); 
+            background-color: transparent; border: 1px solid var(--accent-color); 
+            display: inline-block; transition: all 0.3s; margin-top: 20px; 
+        }
+        .cta-button:hover { background-color: var(--accent-color); color: #000; }
+
+        /* 圓形光點陣列 (淡藍色) */
+        .dot-ring {
+            position: absolute; top: 50%; right: 15%; transform: translateY(-50%);
+            width: 200px; height: 200px; pointer-events: none; z-index: 1; 
+        }
+        .floating-dot {
+            position: absolute; width: 8px; height: 8px; background-color: var(--accent-color); 
+            border-radius: 50%; opacity: 0.7;
+            box-shadow: 0 0 8px var(--accent-color), 0 0 15px rgba(97, 218, 251, 0.5); 
+            animation: float-and-pulse 4s ease-in-out infinite alternate;
+        }
+        /* 圓點定位 */
+        .dot-ring .dot-1 { top: 0; left: 50%; transform: translateX(-50%); animation-delay: 0s; }
+        .dot-ring .dot-2 { top: 14.6%; right: 14.6%; animation-delay: 0.5s; }
+        .dot-ring .dot-3 { top: 50%; right: 0; transform: translateY(-50%); animation-delay: 1s; }
+        .dot-ring .dot-4 { bottom: 14.6%; right: 14.6%; animation-delay: 1.5s; }
+        .dot-ring .dot-5 { bottom: 0; left: 50%; transform: translateX(-50%); animation-delay: 2s; }
+        .dot-ring .dot-6 { bottom: 14.6%; left: 14.6%; animation-delay: 2.5s; }
+        .dot-ring .dot-7 { top: 50%; left: 0; transform: translateY(-50%); animation-delay: 3s; }
+        .dot-ring .dot-8 { top: 14.6%; left: 14.6%; animation-delay: 3.5s; }
+
+        @keyframes float-and-pulse {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+            50% { transform: translate(5px, -5px) scale(1.1); opacity: 1; }
+            100% { transform: translate(-5px, 5px) scale(0.6); opacity: 0.6; } 
+        }
+
+        /* ------------------------------------- */
+        /* 3. 無人機參數介紹區塊 (第三屏內容) */
+        /* ------------------------------------- */
+        .specs-section {
+            background-color: #0d0d0d; padding: 120px 50px; color: #fff; position: relative;
+        }
+        .specs-section h2 { text-align: center; font-size: clamp(2.8rem, 7vw, 5rem); color: var(--accent-color); margin-bottom: 80px; font-weight: 800; }
+        .spec-item {
+            display: flex; align-items: flex-start; margin-bottom: 60px; padding: 40px; 
+            background-color: #1a1a1a; border-radius: 12px; border-left: 5px solid var(--accent-color);
+        }
+        .spec-item:nth-child(even) { flex-direction: row-reverse; border-left: none; border-right: 5px solid var(--accent-color); }
+        .spec-text { flex: 1; padding: 0 40px; }
+        .spec-text h3 { font-size: 1.8rem; color: #fff; margin-bottom: 15px; font-weight: 600; }
+        .spec-text h4 { font-size: 1.2rem; color: var(--accent-color); margin-top: 20px; margin-bottom: 10px; font-weight: 500; }
+        .spec-text ul { list-style: none; padding-left: 0; }
+        .spec-text ul li { 
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2361DAFB'%3E%3Cpath d='M10 15.5l-5.5-5.5 1.41-1.41L10 12.67l7.09-7.09L18.5 7z'/%2F%3E%3C%2Fsvg%3E") no-repeat left center; 
+            background-size: 16px; padding-left: 25px; margin-bottom: 8px; font-size: 1.05rem; color: #ccc; 
+        }
+        
+        /* 媒體查詢：手機版單欄 */
+        @media (max-width: 768px) {
+            .spec-item, .spec-item:nth-child(even) { flex-direction: column; border-left: 5px solid var(--accent-color); border-right: none; }
+            .spec-text { padding: 0; }
+            .spec-item:nth-child(even) .spec-text { order: 1; }
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="hero" id="main-hero">
+        <video autoplay muted loop playsinline>
+            <source src="placeholder_bg_video.mp4" type="video/mp4">
+            您的瀏覽器不支援影片標籤。
+        </video>
+        <div class="svg-container">
+            <svg class="svg-line" viewBox="0 0 100 100">
+                <path class="line" d="M 10 90 L 50 10 L 90 90 Z" /> 
+            </svg>
+        </div>
+        
+        <div class="hero-content">
+            <h2>Aether wings 埃特爾之翼</h2>
+            <h1>Myna系列</h1>
+            <p>無界自主，以任務需求為導向。</p>
+            
+            <a href="#mission-autonomy-content" class="scroll-indicator">
+                <span class="indicator-arrow">&lt;</span>
+            </a>
+            
+        </div>
+    </div>
+    
+    <div class="feature-section" id="mission-autonomy-content">
+        
+        <div class="dot-ring">
+            <div class="floating-dot dot-1"></div>
+            <div class="floating-dot dot-2"></div>
+            <div class="floating-dot dot-3"></div>
+            <div class="floating-dot dot-4"></div>
+            <div class="floating-dot dot-5"></div>
+            <div class="floating-dot dot-6"></div>
+            <div class="floating-dot dot-7"></div>
+            <div class="floating-dot dot-8"></div>
+        </div>
+        
+        <div class="feature-container">
+            <div class="feature-text">
+                <h2>需求模組化</h2>
+                <p>
+                    我們捨棄常見空拍機的死板包裝，使用fpv機體架構，讓其能模組化、任務化的製造，並且再有損壞時，能夠輕而易舉更換零件。
+                </p>
+                <p>
+                                                                                                  
+                </p>
+                <p>
+                                                                                                  
+                </p>
+                <h2>任務自主</h2>
+                <p>
+                    Myna AI-1的核心技術使平台能夠獨立執行複雜任務，無需持續的人類干預，確保在高風險環境中的可靠性和效率。
+                </p>
+                <a href="#drone-specs" class="cta-button">查看產品參數</a>
+            </div>
+        </div>
+    </div>
+    <div class="feature-container">
+        <div class="feature-text">
+            <h2>臺灣研發 60%臺灣製!</h2>
+            <p>
+                軟體調整設計到機體與飛控晶片均為臺灣製造，除了部分如鏡頭及馬達目前沒有供應鏈，但如有特殊需求，我們會為您尋找。
+            </p>
+                                  
+        </div>
+    </div>
+</div>    
+    <section id="drone-specs" class="specs-section">
+        <div class="feature-container">
+            <h2>無人機產品系列與參數</h2>
+            
+            <div class="spec-item">
+                <div class="spec-text">
+                    <h3>C-1&C-2 空拍任務平台 (5吋機 & 7吋機)</h3>
+                    <p>
+                        針對專業影像擷取和偵察任務設計的平台。5吋機輕巧靈活，7吋機則提供更長的續航和更強的載重能力，滿足多樣化的空拍需求。
+                    </p>
+                    <h4>核心參數</h4>
+                    <ul>
+                        <li>飛控系統：搭載台灣製造 F4 飛控</li>
+                        <li>載重能力：可選配搭載 GoPro 等運動相機</li>
+                        <li>價格優勢：價格實惠，為高品質空拍提供具競爭力的解決方案</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="spec-item">
+                 <div class="spec-text">
+                    <h3>AI-1 先遣7吋無人機 (國防/執法專用)</h3>
+                    <p>
+                        專為緊急響應和現場情資蒐集而設計。能在人力抵達前快速提供高解析度現場畫面，極大化執法效率和安全性。
+                    </p>
+                    <h4>核心參數與功能</h4>
+                    <ul>
+                        <li>飛控系統：F4 飛控整合 NVIDIA 邊緣運算模組</li>
+                        <li>自主能力：可提早抵達案發現場進行偵測</li>
+                        <li>目標追蹤：具備車輛及目標追蹤能力（備註：開發中）</li>
+                        <li>應用場景：軍&警用偵查、高風險區域監控</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="spec-item">
+                <div class="spec-text">
+                    <h3>L-1 3吋函道機 (室內安全娛樂)</h3>
+                    <p>
+                        以涵道式螺旋槳設計，最大限度地提高室內飛行的安全性和樂趣。適合在狹小空間或複雜環境中進行訓練和娛樂飛行。
+                    </p>
+                    <h4>核心參數</h4>
+                    <ul>
+                        <li>飛控系統：搭載 F4 飛控</li>
+                        <li>安全設計：函道式設計，保護螺旋槳和環境</li>
+                        <li>應用場景：室內飛行、穿越機新手練習、狹小空間運作</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+            
+            // 讓 Hero 區塊固定並淡出 (Scrollytelling 核心)
+            ScrollTrigger.create({
+                trigger: "#main-hero", 
+                start: "top top", 
+                end: "+=100%", 
+                pin: "#main-hero", 
+                pinSpacing: true, 
+                scrub: 1, 
+                animation: gsap.timeline()
+                    .to("#main-hero .hero-content", { opacity: 0, y: -50, duration: 1 }, 0)
+                    .to("#main-hero video", { opacity: 0.1, duration: 1 }, 0)
+                    .to("#main-hero .svg-container", { opacity: 0, duration: 1 }, 0)
+            });
+
+            // 無人機參數區塊淡入動畫
+            gsap.from("#drone-specs", {
+                scrollTrigger: {
+                    trigger: "#drone-specs",
+                    start: "top bottom", 
+                    toggleActions: "play none none none"
+                },
+                y: 50,
+                opacity: 0,
+                duration: 1.2
+            });
+
+            // Anime.js 線條動畫 (讓線條無限循環繪製)
+            const lines = document.querySelectorAll('.line');
+            if (typeof anime !== 'undefined') {
+                const timeline = anime.timeline({ loop: true, easing: 'easeInOutQuad' });
+                timeline.add({ targets: lines, strokeDashoffset: [anime.setDashoffset, 0], duration: 2000, delay: anime.stagger(200) }, 0); 
+                timeline.add({ targets: lines, strokeDashoffset: [0, anime.setDashoffset], duration: 1500, delay: 1000 }, 2000); 
+            }
+        });
+    </script>
+</body>
+</html>
